@@ -8,6 +8,8 @@
 This project will continued to be maintained and transformed into a stable library as i experiment with the implementation.
 
 
+**Mentions**
+Based on the work of [j4cbo](https://github.com/j4cbo/j4cDAC/) and [echelon](https://github.com/echelon)
 
 License
 -------

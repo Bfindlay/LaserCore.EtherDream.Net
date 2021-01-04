@@ -38,5 +38,24 @@ namespace EtherDream.Net.Device
             return broadcast;
 
         }
+
+        public static ushort GetBufferCapacity(DacDto dac)
+        {
+            return dac.Identity.BufferCapacity;
+        }
+
+        public static ushort GetHwVersion(DacDto dac)
+        {
+            return dac.Identity.HwVersion;
+        }
+        public static ushort GetSwVersion(DacDto dac)
+        {
+            return dac.Identity.SwVersion;
+        }
+
+        public static uint GetMaxPointRate(DacDto dac)
+        {
+            return dac.Identity.MaxPointRate;
+        }
     }
 }

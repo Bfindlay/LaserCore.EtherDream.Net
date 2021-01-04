@@ -7,15 +7,15 @@ using System.Collections.Concurrent;
 namespace EtherDream.Net.Discovery
 {
 
-    public class DeviceDiscovery : IDisposable
+    public class DeviceDiscovery
     {
         private readonly int Broadcast_Port = 7654;
         private UdpClient _discoveryClient;
 
-        public ConcurrentDictionary<string, DacDto> DiscoveredDevices;
+        public static ConcurrentDictionary<string, DacDto> DiscoveredDevices = new ConcurrentDictionary<string, DacDto>();
 
         //TODO Handle find more than one device
-        
+
         public DeviceDiscovery()
         {
             _discoveryClient = new UdpClient(Broadcast_Port);
@@ -32,7 +32,7 @@ namespace EtherDream.Net.Discovery
         }
         
 
-        public DacDto FindFirstDevice()
+        public  DacDto FindFirstDevice()
         {
             // TODO Handle socket no connection
 
@@ -44,11 +44,13 @@ namespace EtherDream.Net.Discovery
             etherDream.Identity = identity;
             etherDream.Ip = remoteEP.Address.ToString();
 
+            DiscoveredDevices.TryAdd(etherDream.Ip, etherDream);
+
             return etherDream;
 
         }
 
-        public string GetDeviceName(DacDto dac)
+        public static string GetDeviceName(DacDto dac)
         {
             unsafe
             {
@@ -58,35 +60,12 @@ namespace EtherDream.Net.Discovery
             }
         }
 
-        public string GetDeviceIp(DacDto dac)
+        public static string GetDeviceIp(DacDto dac)
         {
             unsafe
             {
                 return dac.Ip;
             }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-
-        protected virtual void Dispose(bool disposing)
-        {
-
-            if (disposing)
-            {
-                _discoveryClient.Close();
-                _discoveryClient.Dispose();
-            }
-        }
-
-
-        ~DeviceDiscovery()
-        {
-            Dispose(false);
         }
     }
 

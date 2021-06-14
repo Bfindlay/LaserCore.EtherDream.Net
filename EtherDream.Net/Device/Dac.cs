@@ -117,7 +117,7 @@ namespace LaserCore.Etherdream.Net.Device
         }
 
 
-        public void StreamPoints(DacPointDto[] points, ushort pointRate)
+        public void StreamPoints(DacPointDto[] points, ushort pointRate = 30000)
         {
             // Try prepare 
             var response = Prepare();

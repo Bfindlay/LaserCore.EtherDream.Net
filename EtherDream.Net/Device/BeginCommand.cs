@@ -1,8 +1,9 @@
 ﻿using System;
-using EtherDream.Net.Dto;
-using EtherDream.Net.Enums;
 using System.Runtime.InteropServices;
-namespace EtherDream.Net.Device
+using LaserCore.Etherdream.Net.Dto;
+using LaserCore.Etherdream.Net.Enums;
+
+namespace LaserCore.Etherdream.Net.Device
 {
     public static class BeginCommand
     {

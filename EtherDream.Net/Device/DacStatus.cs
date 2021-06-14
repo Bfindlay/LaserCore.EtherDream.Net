@@ -1,7 +1,8 @@
 using System;
-using EtherDream.Net.Dto;
 using System.Runtime.InteropServices;
-namespace EtherDream.Net.Device
+using LaserCore.Etherdream.Net.Dto;
+
+namespace LaserCore.Etherdream.Net.Device
 {
 
     public static class DacStatus

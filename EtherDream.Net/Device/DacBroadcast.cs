@@ -1,9 +1,9 @@
 ﻿using System;
-using EtherDream.Net.Dto;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using LaserCore.Etherdream.Net.Dto;
 
-namespace EtherDream.Net.Device
+namespace LaserCore.Etherdream.Net.Device
 {
     public static class DacBroadcast
     {

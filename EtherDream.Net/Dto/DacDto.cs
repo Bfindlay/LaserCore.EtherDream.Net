@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace EtherDream.Net.Dto
+namespace LaserCore.Etherdream.Net.Dto
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     unsafe public struct DacDto

@@ -1,9 +1,9 @@
 using System;
-using EtherDream.Net.Enums;
-using EtherDream.Net.Dto;
 using System.Runtime.InteropServices;
+using LaserCore.Etherdream.Net.Dto;
+using LaserCore.Etherdream.Net.Enums;
 
-namespace EtherDream.Net.Device
+namespace LaserCore.Etherdream.Net.Device
 {
     
     public static class DacResponse

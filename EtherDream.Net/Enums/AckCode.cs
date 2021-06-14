@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace EtherDream.Net.Enums
+﻿namespace LaserCore.Etherdream.Net.Enums
 {
 
     public enum AckCode : byte

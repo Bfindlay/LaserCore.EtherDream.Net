@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-namespace EtherDream.Net.Dto
+
+namespace LaserCore.Etherdream.Net.Dto
 {
     [Serializable]
     [StructLayout(LayoutKind.Sequential, Pack = 1)]

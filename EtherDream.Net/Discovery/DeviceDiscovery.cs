@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using EtherDream.Net.Dto;
-using System.Collections.Concurrent;
-namespace EtherDream.Net.Discovery
+using LaserCore.Etherdream.Net.Dto;
+
+namespace LaserCore.Etherdream.Net.Discovery
 {
 
     public class DeviceDiscovery

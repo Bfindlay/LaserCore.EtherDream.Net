@@ -1,13 +1,13 @@
 using System;
-using System.IO;
-using EtherDream.Net.Dto;
-using EtherDream.Net.Enums;
-using System.Threading;
-using System.Runtime.InteropServices;
-using System.Net.Sockets;
 using System.Diagnostics;
+using System.IO;
+using System.Net.Sockets;
+using System.Runtime.InteropServices;
+using System.Threading;
+using LaserCore.Etherdream.Net.Dto;
+using LaserCore.Etherdream.Net.Enums;
 
-namespace EtherDream.Net.Device
+namespace LaserCore.Etherdream.Net.Device
 {
 
     public delegate void StatusUpdate(AckCode ack, ushort bufferFullness);
@@ -117,7 +117,7 @@ namespace EtherDream.Net.Device
         }
 
 
-        public void StreamPoints(DacPointDto[] points)
+        public void StreamPoints(DacPointDto[] points, ushort pointRate)
         {
             // Try prepare 
             var response = Prepare();
@@ -157,7 +157,7 @@ namespace EtherDream.Net.Device
                     response = Transmit(serialized);
                     played += pointCap;
 
-                    Begin(30000);
+                    Begin(pointRate);
                 }
 
             }

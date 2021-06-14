@@ -1,8 +1,8 @@
 ﻿using System;
-using EtherDream.Net.Dto;
 using System.Runtime.InteropServices;
+using LaserCore.Etherdream.Net.Dto;
 
-namespace EtherDream.Net.Device
+namespace LaserCore.Etherdream.Net.Device
 {
     public static class DacPoint
     {

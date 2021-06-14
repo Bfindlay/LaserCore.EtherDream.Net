@@ -117,7 +117,7 @@ namespace EtherDream.Net.Device
         }
 
 
-        public void StreamPoints(DacPointDto[] points)
+        public void StreamPoints(DacPointDto[] points, ushort pointRate = 30000)
         {
             // Try prepare 
             var response = Prepare();
@@ -157,7 +157,7 @@ namespace EtherDream.Net.Device
                     response = Transmit(serialized);
                     played += pointCap;
 
-                    Begin(30000);
+                    Begin(pointRate);
                 }
 
             }

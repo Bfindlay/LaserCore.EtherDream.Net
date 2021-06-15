@@ -1,5 +1,6 @@
 # EtherDream.Net
 
+![Nuget](https://img.shields.io/nuget/v/LaserCore.Etherdream.Net?label=LaserCore.Etherdream.Net)
 
 .Net Core native library for the [EtherDream laser DAC](http://ether-dream.com/).
 

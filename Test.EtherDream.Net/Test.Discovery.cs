@@ -1,8 +1,11 @@
 using NUnit.Framework;
 using System;
-using EtherDream.Net.Discovery;
-using EtherDream.Net.Device;
-using EtherDream.Net.Dto;
+using System.Collections.Generic;
+using LaserCore.Etherdream.Net.Discovery;
+using LaserCore.Etherdream.Net.Device;
+using LaserCore.Etherdream.Net.Dto;
+using System.Linq;
+
 namespace Test.EtherDream.Net
 {
     public class DiscoveryTests
@@ -19,12 +22,20 @@ namespace Test.EtherDream.Net
         {
             var discovery = new DeviceDiscovery();
             var dac = discovery.FindFirstDevice();
-            var name = discovery.GetDeviceName(dac);
-            var ip = discovery.GetDeviceIp(dac);
+            var ip = dac.Ip;
 
             Dac etherDream = new Dac(ip);
             var points = MakePoints(1000);
             etherDream.StreamPoints(points);
+        }
+
+        [Test]
+
+        public void DacTestFindAll()
+        {
+            var discovery = new DeviceDiscovery();
+            var dacs = discovery.GetAvailableDevices().ToList();
+            Assert.AreEqual(dacs.Count, 2);
         }
 
         public static DacPointDto[] MakePoints(short num)
@@ -96,8 +107,8 @@ namespace Test.EtherDream.Net
         {
             var discovery = new DeviceDiscovery();
             var dac = discovery.FindFirstDevice();
-            var name = discovery.GetDeviceName(dac);
-            var ip = discovery.GetDeviceIp(dac);
+            var name = dac.Identity.ToString();
+            var ip = dac.Ip;
             Assert.AreEqual("ether dream 8763fa", name);
             Assert.AreEqual("192.168.1.111", ip);
         }

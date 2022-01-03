@@ -1,10 +1,9 @@
 using System;
 using System.Runtime.InteropServices;
-using LaserCore.Etherdream.Net.Dto;
+using LaserCore.EtherDream.Net.Dto;
 
-namespace LaserCore.Etherdream.Net.Device
+namespace LaserCore.EtherDream.Net.Device
 {
-
     public static class DacStatus
     {
         public static DacStatusDto ParseDacStatus(byte[] bytes)
@@ -14,7 +13,7 @@ namespace LaserCore.Etherdream.Net.Device
                 throw new Exception($"Response expected to be 20 bytes but was {bytes.Length}");
             }
             Span<byte> span = bytes;
-            DacStatusDto status = MemoryMarshal.Cast<byte, DacStatusDto>(span)[0];
+            var status = MemoryMarshal.Cast<byte, DacStatusDto>(span)[0];
             return status;
         }
 
@@ -25,9 +24,8 @@ namespace LaserCore.Etherdream.Net.Device
                 throw new Exception($"Response expected to be 20 bytes but was {span.Length}");
             }
 
-            DacStatusDto status = MemoryMarshal.Cast<byte, DacStatusDto>(span)[0];
+            var status = MemoryMarshal.Cast<byte, DacStatusDto>(span)[0];
             return status;
         }
     }
-
 }

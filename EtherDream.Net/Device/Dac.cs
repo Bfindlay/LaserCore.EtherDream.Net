@@ -4,13 +4,13 @@ using System.IO;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
-using LaserCore.Etherdream.Net.Dto;
-using LaserCore.Etherdream.Net.Enums;
+using LaserCore.EtherDream.Net.Dto;
+using LaserCore.EtherDream.Net.Enums;
 
-namespace LaserCore.Etherdream.Net.Device
+namespace LaserCore.EtherDream.Net.Device
 {
 
-    public delegate void StatusUpdate(AckCode ack, ushort bufferFullness);
+    public delegate void StatusUpdate(AckCode ack, PlayBackEngineState playBackEngineState, LightEngineState lightEngineState, ushort bufferFullness);
     public delegate void DeviceDisconnect();
     public delegate void DeviceConnect();
 
@@ -24,76 +24,91 @@ namespace LaserCore.Etherdream.Net.Device
         public event DeviceConnect DeviceConnected;
 
         // Consts
-        private readonly int Communication_Port = 7765;
-        private readonly byte COMMAND_BEGIN = 0x62;
-        private readonly byte COMMAND_DATA = 0x64;
-        private readonly byte COMMAND_PING = 0x3F;
-        private readonly byte COMMAND_PREPARE = 0x70;
+        private const int CommunicationPort = 7765;
+        private const byte CommandBegin = 0x62;
+        private const byte CommandData = 0x64;
+        private const byte CommandPing = 0x3F;
+        private const byte CommandPrepare = 0x70;
 
-        private readonly int BUFFER_SIZE = 1799;
+        // TODO make dynamic based on the EtherDream Version
+        private const int BufferSize = 1799;
 
-        private readonly byte COMMAND_STOP = 0x73;
-        private readonly byte COMMAND_E_STOP = 0x00;
-        private readonly byte COMMAND_CLEAR_E_STOP = 0x63;
+        private const byte CommandStop = 0x73;
+        private const byte CommandEStop = 0x00;
+        private const byte CommandClearEStop = 0x63;
+
+        // Fields
+        private DacResponseDto _lastResponse;
 
         // Device network Stream
         private TcpClient _socket;
-        private string _ip;
-        private bool IsConnected = false;
+        private bool _isConnected;
 
-
+        // Hearbeat
+        private Timer _timer;
 
         public Dac(string ip)
         {
-            //TODO handle socket not connect excpetion
-            _ip = ip;
+            _lastResponse = default;
+            //TODO handle socket not connect exception
+            Ip = ip;
             ConnectSocket();
 
             //init heartbeat //TODO Teardown to prevent memory leak
-            Timer timer = new Timer(Heartbeat, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            _timer = new Timer(Heartbeat, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
         }
 
         private void ConnectSocket()
         {
-            _socket = new TcpClient(_ip, Communication_Port);
+            _socket = new TcpClient(Ip, CommunicationPort);
             _socket.Client.ReceiveTimeout = 500;
-            IsConnected = true;
+            _isConnected = true;
             DeviceConnected?.Invoke();
         }
 
         #region Device Control Functions
 
-        public void TryPrepare(DacResponseDto response)
+        public bool TryPrepare()
         {
-            if (response.DacStatus.PlaybackFlags != 0x0 &&
-                response.DacStatus.PlaybackFlags != 0x1)
+            if (_lastResponse.DacStatus.PlaybackFlags != 0x0 &&
+              _lastResponse.DacStatus.PlaybackFlags != 0x1)
             {
+                // TODO Handle bad playback flags
                 Debug.WriteLine("bad playback flags");
             }
+
+            if (_lastResponse.DacStatus.LightEngineState is not LightEngineState.Ready ||
+                _lastResponse.DacStatus.PlayBackState is not PlayBackEngineState.Idle)
+            {
+                return false;
+            }
+
+            Prepare();
+            return true;
         }
 
         public void Stop()
         {
-            byte[] command = { COMMAND_STOP };
+            byte[] command = { CommandStop };
             Transmit(command);
         }
 
         public void EStop()
         {
-            byte[] command = { COMMAND_E_STOP };
+            byte[] command = { CommandEStop };
             Transmit(command);
         }
 
         public void ClearEStop()
         {
-            byte[] command = { COMMAND_CLEAR_E_STOP };
+            byte[] command = { CommandClearEStop };
             Transmit(command);
         }
 
         public DacResponseDto Prepare()
         {
-            byte[] command = { COMMAND_PREPARE };
+            byte[] command = { CommandPrepare };
 
             var response = Transmit(command);
             return response;
@@ -101,67 +116,71 @@ namespace LaserCore.Etherdream.Net.Device
 
         public DacResponseDto Begin(ushort pointRate = 30000)
         {
-            BeginCommandDto cmd = new BeginCommandDto()
+            var cmd = new BeginCommandDto()
             {
-                Command = COMMAND_BEGIN,
+                Command = CommandBegin,
                 LowWaterMark = 0, //not implemented
                 PointRate = pointRate
             };
-            var serialized = Serialize<BeginCommandDto>(cmd);
+            var serialized = Serialize(cmd);
 
             var response = Transmit(serialized);
-
-            var ack = DacResponse.ParseAckCode(response.Response);
-
             return response;
         }
 
 
         public void StreamPoints(DacPointDto[] points, ushort pointRate = 30000)
         {
-            // Try prepare 
-            var response = Prepare();
-            var played = 0;
-            ReadOnlySpan<DacPointDto> buffer = new ReadOnlySpan<DacPointDto>(points);
-
-            for (; ; )
+            try
             {
-                var pointCap = (buffer.Length < BUFFER_SIZE) ? buffer.Length - 1 : (BUFFER_SIZE - response.DacStatus.BufferFullness);
-
-                if (pointCap < 0)
+                // Try prepare 
+                var canPlay = TryPrepare();
+                if (!canPlay)
                 {
-                    response = Ping();
+                    throw new Exception("Not Ready To play");
                 }
-                else
+                var response = _lastResponse;
+                var played = 0;
+                var buffer = new ReadOnlySpan<DacPointDto>(points);
+                while (true)
                 {
-                    if ((played + pointCap) >= buffer.Length)
+                    var pointCap = (buffer.Length < BufferSize) ? buffer.Length - 1 : (BufferSize - response.DacStatus.BufferFullness);
+
+                    if (pointCap < 0)
                     {
-                        // playback done
-                        break;
+                        response = Ping();
                     }
-
-                    var playablePoints = buffer.Slice(played, pointCap);
-                    DataCommandDto cmd = new DataCommandDto()
+                    else
                     {
-                        Command = COMMAND_DATA,
-                        NPoints = Convert.ToUInt16(pointCap),
-                        Points = playablePoints.ToArray()
-                    };
+                        if ((played + pointCap) >= buffer.Length)
+                        {
+                            // playback done
+                            break;
+                        }
 
-                    //serialize points
+                        var playablePoints = buffer.Slice(played, pointCap);
+                        var cmd = new DataCommandDto()
+                        {
+                            Command = CommandData,
+                            NPoints = Convert.ToUInt16(pointCap),
+                            Points = playablePoints.ToArray()
+                        };
 
-                    var serialized = SerializePointsCommand(cmd);
+                        //serialize points
+                        var serialized = SerializePointsCommand(cmd);
 
-                    //transmit
+                        //transmit
+                        response = Transmit(serialized);
+                        played += pointCap;
 
-                    response = Transmit(serialized);
-                    played += pointCap;
-
-                    Begin(pointRate);
+                        Begin(pointRate);
+                    }
                 }
-
             }
-
+            catch
+            {
+                // NOOP
+            }
         }
 
         #endregion
@@ -208,20 +227,29 @@ namespace LaserCore.Etherdream.Net.Device
         {
             _socket.Client.Send(cmd);
             var bytes = ReceiveResponse();
-            return DacResponse.ParseDacResponse(bytes);
+            var response = DacResponse.ParseDacResponse(bytes);
+            _lastResponse = response;
+            var ack = DacResponse.ParseAckCode(response.Response);
+
+            StatusUpdated?.Invoke(ack, response.DacStatus.PlayBackState, response.DacStatus.LightEngineState, response.DacStatus.BufferFullness);
+            return response;
         }
 
         private DacResponseDto Transmit(Span<byte> cmd)
         {
             _socket.Client.Send(cmd);
             var bytes = ReceiveResponse();
-            return DacResponse.ParseDacResponse(bytes);
+            var response = DacResponse.ParseDacResponse(bytes);
+            _lastResponse = response;
 
+            var ack = DacResponse.ParseAckCode(response.Response);
+            StatusUpdated?.Invoke(ack, response.DacStatus.PlayBackState, response.DacStatus.LightEngineState, response.DacStatus.BufferFullness);
+            return response;
         }
 
-        private DacResponseDto Ping()
+        public DacResponseDto Ping()
         {
-            byte[] command = { COMMAND_PING };
+            byte[] command = { CommandPing };
             return Transmit(command);
         }
 
@@ -236,13 +264,7 @@ namespace LaserCore.Etherdream.Net.Device
 
         #region Fields
 
-        public string IP
-        {
-            get
-            {
-                return _ip;
-            }
-        }
+        public string Ip { get; }
 
         #endregion
 
@@ -250,14 +272,13 @@ namespace LaserCore.Etherdream.Net.Device
 
         private void Heartbeat(object state)
         {
-
-            if (!_socket.Connected && IsConnected)
+            if (!_socket.Connected && _isConnected)
             {
                 DeviceDisconnected?.Invoke();
-                IsConnected = false;
+                _isConnected = false;
             }
 
-            if (!IsConnected)
+            if (!_isConnected)
             {
                 // Try reconnect
                 try
@@ -266,9 +287,9 @@ namespace LaserCore.Etherdream.Net.Device
                     DeviceConnected?.Invoke();
 
                 }
-                catch (Exception e)
+                catch
                 {
-                    IsConnected = false;
+                    _isConnected = false;
                 }
             }
 
@@ -276,21 +297,24 @@ namespace LaserCore.Etherdream.Net.Device
             {
                 var response = Ping();
 
-                Span<byte> statusSpan = Serialize<DacStatusDto>(response.DacStatus);
+                var statusSpan = Serialize(response.DacStatus);
 
                 var dacStatus = DacStatus.ParseDacStatus(statusSpan);
 
-                var ack = DacResponse.ParseAckCode(response.Response);     
+                var ack = DacResponse.ParseAckCode(response.Response);
 
-                StatusUpdated?.Invoke(ack, dacStatus.BufferFullness);
+                if (dacStatus.LightEngineFlags != 0)
+                {
+                    StatusUpdated?.Invoke(ack, dacStatus.PlayBackState, dacStatus.LightEngineState, dacStatus.BufferFullness);
+                }
+
+                StatusUpdated?.Invoke(ack, dacStatus.PlayBackState, dacStatus.LightEngineState, dacStatus.BufferFullness);
             }
-            catch (Exception e)
+            catch
             {
-
+                // NOOP
             }
         }
-
         #endregion
     }
-
 }

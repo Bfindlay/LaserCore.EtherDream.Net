@@ -1,4 +1,4 @@
-﻿namespace LaserCore.Etherdream.Net.Enums
+﻿namespace LaserCore.EtherDream.Net.Enums
 {
     public enum CommandCodeType : byte
     {
@@ -11,21 +11,13 @@
 
     public static class CommandCode
     {
-        public static CommandCodeType ParseCommandCode(byte cmd)
+        public static CommandCodeType ParseCommandCode(byte cmd) => cmd switch
         {
-            switch (cmd)
-            {
-                case 0x62:
-                    return CommandCodeType.Begin;
-                case 0x64:
-                    return CommandCodeType.Data;
-                case 0x3F:
-                    return CommandCodeType.Ping;
-                case 0x70:
-                    return CommandCodeType.Prepare;
-                default:
-                    return CommandCodeType.Unknown;
-            }
-        }
+            0x62 => CommandCodeType.Begin,
+            0x64 => CommandCodeType.Data,
+            0x3F => CommandCodeType.Ping,
+            0x70 => CommandCodeType.Prepare,
+            _ => CommandCodeType.Unknown,
+        };
     }
 }

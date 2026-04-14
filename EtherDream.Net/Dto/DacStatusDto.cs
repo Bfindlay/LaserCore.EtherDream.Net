@@ -1,12 +1,14 @@
-﻿using System.Runtime.InteropServices;
+﻿using LaserCore.EtherDream.Net.Enums;
+using System.Runtime.InteropServices;
 
-namespace LaserCore.Etherdream.Net.Dto
+namespace LaserCore.EtherDream.Net.Dto
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    unsafe public struct DacStatusDto
+    public struct DacStatusDto
     {
 
         public byte Protocol;
+
         /**
          * The light engine is one of three state machines in the DAC.
          *
@@ -25,7 +27,8 @@ namespace LaserCore.Etherdream.Net.Dto
          *  how transitions to and from the "Warmup" and "Cooldown" states
          *  occur.)
          */
-        public byte LightEngineState;
+        public LightEngineState LightEngineState;
+
         /**
          * The playback_state is one of three state machines in the DAC.
          * It reports the state of the playback system.
@@ -47,7 +50,8 @@ namespace LaserCore.Etherdream.Net.Dto
          *
          * See playback_flags for additional information.
          */
-        public byte PlayBackState;
+        public PlayBackEngineState PlayBackState;
+
         /**
          * The currently-selected data source is specified in the source field:
          *
@@ -56,7 +60,8 @@ namespace LaserCore.Etherdream.Net.Dto
          *   - 1: ILDA playback from SD card.
          *   - 2: Internal abstract generator.
          */
-        public byte Source;
+        public PlayBackSource Source;
+
         /**
          * The light_engine_state field gives the current state of the light
          * engine. If the light engine is Ready, light_engine_flags will be 0.
@@ -84,6 +89,7 @@ namespace LaserCore.Etherdream.Net.Dto
          *      was entered. Reset to zero by the Prepare command.
          */
         public ushort PlaybackFlags;
+
         /// TODO: Undocumented?
         public ushort SourceFlags;
 

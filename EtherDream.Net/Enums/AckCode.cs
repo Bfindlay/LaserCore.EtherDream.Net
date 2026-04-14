@@ -1,6 +1,5 @@
-﻿namespace LaserCore.Etherdream.Net.Enums
+﻿namespace LaserCore.EtherDream.Net.Enums
 {
-
     public enum AckCode : byte
     {
         Ack = 0x61,
@@ -9,5 +8,4 @@
         NackStop = 0x21,
         NackUnknown
     }
-
 }

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using LaserCore.Etherdream.Net.Dto;
+using LaserCore.EtherDream.Net.Dto;
 
-namespace LaserCore.Etherdream.Net.Device
+namespace LaserCore.EtherDream.Net.Device
 {
     public static class DacPoint
     {
@@ -44,9 +44,9 @@ namespace LaserCore.Etherdream.Net.Device
             return XYLuma(x, y, 0);
         }
 
-        public static Span<byte> serialize(DacPointDto point)
+        public static Span<byte> Serialize(DacPointDto point)
         {
-            Span<byte> bytes = MemoryMarshal.Cast<DacPointDto, byte>(MemoryMarshal.CreateSpan<DacPointDto>(ref point, 1));
+            var bytes = MemoryMarshal.Cast<DacPointDto, byte>(MemoryMarshal.CreateSpan<DacPointDto>(ref point, 1));
             return bytes;
         }
     }
